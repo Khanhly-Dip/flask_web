@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatBot Mira - Your friends</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <!-- Thêm jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Thêm mCustomScrollbar (CSS và JS) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+
+    <link rel="icon" href="/path/to/your/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+
+</head>
+<body>
+    <div class="chat">
+        <div class="chat-title">
+          <h1>Mira</h1>
+          <h2>talk to Mira</h2>
+          <figure class="avatar">
+            <img src="https://i.pinimg.com/736x/a8/b8/7a/a8b87a18e880be3ca0f67aef497ecf85.jpg" />
+             
+          </figure>
+        </div>
+        <div class="messages">
+
+          <div class="messages-content">
+            <div id="myModal" class="modal">
+                <div class="modal-content">
+                  <span class="close">&times;</span>
+                  <p id="modal-response"></p>
+                </div>
+              </div>
+              {% if best_match %}
+                    <!-- Tin nhắn người dùng -->
+                    <div class="message user-message">
+                        <p><strong>User:</strong> {{ user_input }}</p>
+                    </div>
+
+                    <!-- Tin nhắn bot -->
+                    <div class="message bot-message">
+                        <p><strong>Mira:</strong> Thông tin về:  
+                            {% if best_match != "Không tìm thấy kết quả phù hợp." %}
+                                {{ best_match }}
+                            {% else %}
+                                Tôi không hiểu ý bạn lắm. Nếu có bất kỳ câu hỏi nào về thủ tục hành chính, hãy cho tôi biết.
+                            {% endif %}
+                        </p>
+                        <p><strong>Thông tin chi tiết:</strong> 
+                            {% if detailed_info != "Không có thông tin chi tiết." %}
+                                {{ detailed_info }}
+                            {% else %}
+                                Tôi không hiểu ý bạn lắm. Nếu có bất kỳ câu hỏi nào về thủ tục hành chính, hãy cho tôi biết.
+                            {% endif %}
+                        </p>
+                        <p><strong>hi</strong></p>
+                    </div>
+                {% endif %}
+          </div>
+        </div>
+        <div class="message-box">
+            <input type="text" id="messageInput" class="message-input" placeholder="Nhập tin nhắn của bạn..." style="overflow:hidden; height:auto;">
+            <button class="message-submit"><i class="fa-solid fa-paper-plane"></i></button>
+            <!-- <div class="mCSB_container"></div> -->
+        </div>
+      
+      </div>
+      <div class="bg"></div>
+
+      <script>
+
+        var $messages = $(".messages-content"),
+            d,
+            h,
+            m = null,
+            i = 0;
+
+
+        $(window).on("load", function () {
+            $messages.mCustomScrollbar();
+            console.log("mCustomScrollbar đã được khởi tạo.");
+        });
+    
+        function updateScrollbar() {
+            $messages.mCustomScrollbar("update").mCustomScrollbar("scrollTo", "bottom", {
+                scrollInertia: 10,
+                timeout: 0
+            });
+        }
+
+        <!-- cập nhật thời gian trả lờ tin nhắn -->
+        function setDate() {
+            d = new Date();
+            if (m != d.getMinutes()) {
+                console.log(`Phút thay đổi từ ${m} sang ${d.getMinutes()}`);
+                m = d.getMinutes();
+                setTimeout(function() { // Thêm độ trễ
+                    $('<div class="timestamp">' + d.getHours() + ":" + m + "</div>").appendTo(
+                        $(".message:last")
+                    );
+                    console.log("Timestamp được thêm thành công.");
+                }, 1000 + Math.random() * 1000); // Độ trễ từ 1 đến 2 giây
+            }
+            
+        }
+    
+        function insertMessage() {
+            const messageInput = $(".message-input");
+            let msg = messageInput.val().trim(); // Lấy giá trị input và loại bỏ khoảng trắng thừa
+
+            if (!msg) {
+                console.log("Input trống, vui lòng nhập tin nhắn.");
+                return false; // Nếu trống thì thoát sớm
+            }
+
+            // Hiển thị tin nhắn cá nhân
+            $('<div class="message message-personal">' + msg + "</div>")
+                .appendTo($(".mCSB_container"))
+                .addClass("new");
+
+            setDate();
+            messageInput.val(null); // Xóa input sau khi gửi
+            updateScrollbar();
+
+            // Hiển thị trạng thái "đang tải" (hiệu ứng 3 chấm)
+            $('<div class="message loading new"><figure class="avatar"><img src="https://i.pinimg.com/736x/a8/b8/7a/a8b87a18e880be3ca0f67aef497ecf85.jpg" /></figure><span>...</span></div>')
+                .appendTo($(".mCSB_container"))
+                .addClass("new");
+            updateScrollbar();
+
+            // Gửi tin nhắn tới server
+            sendMessageToServer(msg);
+        }
+
+        function sendMessageToServer(message) {
+
+            // Thực hiện gọi Ajax
+            $.ajax({
+                url: '/', // Địa chỉ endpoint
+                method: 'POST', // Phương thức gửi
+                data: { user_input: message }, // Dữ liệu gửi
+                success: function (response) {
+                     setTimeout(() => {
+                        $(".message.loading").remove(); // Xóa trạng thái "đang tải"
+                        const bestMatch = response.best_match || "Tôi không hiểu ý bạn lắm. Nếu có bất kỳ câu hỏi nào về thủ tục hành chính, hãy cho tôi biết.";
+                        const detailedInfo = response.detailed_info || "";
+                        $('<div class="message new"><figure class="avatar"><img src="https://i.pinimg.com/736x/a8/b8/7a/a8b87a18e880be3ca0f67aef497ecf85.jpg" /></figure>' +
+                            '<p><strong>Mira:</strong> ' + bestMatch + '</p>' +
+                            '<p><strong></strong> ' + detailedInfo + '</p>' +
+                            '</div>')
+                            .appendTo($(".mCSB_container"));
+
+                        setDate();
+                        updateScrollbar();
+                    }, 700);
+                                },
+                error: function () {
+                    $(".message.loading").remove(); // Xóa trạng thái "đang tải"
+                    $('<div class="message new"><figure class="avatar"><img src="https://i.pinimg.com/736x/a8/b8/7a/a8b87a18e880be3ca0f67aef497ecf85.jpg" /></figure>' +
+                        '<p><strong>Mira:</strong> Đã xảy ra lỗi. Vui lòng thử lại.</p>' +
+                        '</div>')
+                        .appendTo($(".mCSB_container"))
+                        .addClass("new");
+                    updateScrollbar();
+                }
+            });
+        }
+
+        $(".message-submit").click(function () {
+            insertMessage();
+            console.log("Button clicked");
+        });
+
+        $(window).on("keydown", function (e) {
+            if (e.which === 13) { // Kiểm tra phím Enter
+                e.preventDefault(); // Ngăn hành động mặc định
+                insertMessage();
+            }
+        });
+
+        function fakeMessage() {
+                var userInput = $(".message-input").val();
+                if( userInput != ""){
+                    $('<div class="message loading new"><figure class="avatar"><img src="https://i.pinimg.com/736x/a8/b8/7a/a8b87a18e880be3ca0f67aef497ecf85.jpg" /></figure><span></span></div>').appendTo($(".mCSB_container"));
+                    updateScrollbar();
+
+                    $.ajax({
+                        url: '/',  
+                        method: 'POST', 
+                        data: {
+                            user_input: userInput  
+                        },
+                        success: function(response) {
+                            // Xóa tin nhắn "đang tải"
+                            $(".message.loading").remove();
+                            
+                            // Hiển thị dữ liệu trả về từ máy chủ
+                            $('<div class="message new"><figure class="avatar"><img src="https://i.pinimg.com/736x/a8/b8/7a/a8b87a18e880be3ca0f67aef497ecf85.jpg" /></figure>' +
+                                '<p><strong>Mira:</strong> ' + response.best_match + '</p>' +
+                                '<p><strong></strong> ' + response.detailed_info + '</p>' +
+                                '</div>').appendTo($(".mCSB_container")).addClass("new");
+                            
+                            // Cập nhật ngày giờ và cuộn thanh cuộn (scrollbar)
+                            setDate();
+                            updateScrollbar();
+                        },
+                        error: function() {
+                // Xử lý khi có lỗi xảy ra
+                            $(".message.loading").remove();
+                            $('<div class="message new"><figure class="avatar"><img src="https://i.pinimg.com/736x/a8/b8/7a/a8b87a18e880be3ca0f67aef497ecf85.jpg" /></figure><p><strong>Mira:</strong> Đã xảy ra lỗi. Vui lòng thử lại.</p></div>')
+                                .appendTo($(".mCSB_container"))
+                                .addClass("new");
+                            updateScrollbar();
+                        }
+                    });
+
+                }
+
+            }
+
+             // <!--  gửi khi ấn button Send  -->
+            $(".message-submit").click(function () {
+                insertMessage();
+                console.log(".")
+            });
+    
+    
+    </script>
+    
+</body>
+</html>
