@@ -1,0 +1,9 @@
+
+.venv/
+venv/
+.idea/
+flask_session/
+static/
+templates/
+vietnamese-stopwords-master/
+fontawesome-free-6.7.2-web/
