@@ -1,0 +1,8 @@
+flask
+pymongo
+torch
+nltk
+tokenizer
+Flask-Session
+scikit-learn
+transformers
