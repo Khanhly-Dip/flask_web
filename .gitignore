@@ -3,6 +3,7 @@ venv/
 .idea/
 flask_session/
 static/
-templates/
+templates/*
+!templates/index.html
 vietnamese-stopwords-master/
 fontawesome-free-6.7.2-web/

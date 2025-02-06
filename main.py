@@ -1,4 +1,6 @@
 from functools import lru_cache
+
+import pymongo
 from flask import Flask, render_template, request, jsonify, session
 from flask_session import Session
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -10,10 +12,13 @@ from nltk.stem import PorterStemmer
 import re
 import torch
 import logging
+import pymongo
 import random
 
 # Kết nối MongoDB (đảm bảo MongoDB đã được chạy và cấu hình đúng)
-client = MongoClient("mongodb://mongodb:27017/")
+
+# đã ổi dòng này
+client = pymongo.MongoClient("mongodb://localhost:27017/")
 db = client['mydb']
 collection = db['procedures']
 
@@ -46,7 +51,7 @@ content_keys = ["Tên tài liệu", "Trạng thái tài liệu","Trình tự th�
                     "Thời hạn giải quyết", "Cơ quan thực hiện", "Cơ quan ban hành",
                     "Cơ quan phối hợp", "Thủ tục hành chính liên quan"]
 
-with open('/mnt/d/flask_web/vietnamese-stopwords-master/vietnamese-stopwords.txt', 'r', encoding='utf-8') as f:
+with open('E:/File_Dowload/vietnamese-stopwords-master/vietnamese-stopwords.txt', 'r', encoding='utf-8') as f:
     vietnamese_stopwords = set(f.read().splitlines())
 vietnamese_stopwords = [word.strip() for word in vietnamese_stopwords if word.strip()]
 

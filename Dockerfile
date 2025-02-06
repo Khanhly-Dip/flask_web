@@ -15,3 +15,10 @@ EXPOSE 5000
 
 # Bước 6: Chạy ứng dụng Flask
 CMD ["python", "main.py"]
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
